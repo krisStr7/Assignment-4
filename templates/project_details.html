@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<!--headers-->
+<h1>Project #{{ project_id }} Details</h1>
+
+<h3>Employees working on this project</h3>
+
+<!--Table for employee names and hours-->
+<table class="table">
+    <thead>
+        <tr>
+            <th>Full Name</th>
+            <th>Hours</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!--loops through employees working for that project-->
+        {% for emp in employees %}
+        <tr>
+            <!--first and last name-->
+            <td>{{ emp[0] }} {{ emp[1] }}</td>
+            <!--hours-->
+            <td>{{ emp[2] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!--add/update hours for employees-->
+<h3>Add/Update Employee Hours</h3>
+<form method="POST">
+    <div class="mb-3">
+        <label for="employee" class="form-label">Choose Employee Name</label>
+        <!--employee drop down menu (for all employees)-->
+        <select class="form-select" name="employee" id="employee" required>
+            {% for emp in all_employees %}
+            <option value="{{ emp[0] }}">{{ emp[1] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="hours" class="form-label">Hours</label>
+        <!--hours input-->
+        <input type="number" class="form-control" name="hours" id="hours" step="0.01" required>
+    </div>
+    <!--send new info back via POST method-->
+    <button type="submit" class="btn btn-primary">Add/Update Hours</button>
+</form>
+{% endblock %}

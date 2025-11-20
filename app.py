@@ -53,6 +53,9 @@ def login():
 
     return render_template("login.html", error=error)
 
+
+
+
 # ---------------------------
 # Logout
 # ---------------------------
@@ -60,6 +63,7 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 
 # ---------------------------
 # Home Page (A2)
@@ -133,6 +137,56 @@ def home():
         dept=dept,
         sort=sort
     )
+
+
+
+# -----------------------
+#  A4 page - Project Details
+# --------------------------
+@app.route("/projects/<int:project_id>", methods=["GET", "POST"])
+@login_required
+def project_details(project_id):
+    # connect to database
+    with get_db() as conn:
+        with conn.cursor() as cur:
+
+            # get all the employee names and hours for a certain project
+            cur.execute("""
+                SELECT e.Fname, e.Lname, w.Hours
+                FROM Works_On w
+                JOIN Employee e ON w.Essn = e.Ssn
+                WHERE w.Pno = %s;
+            """, (project_id,))
+            employees = cur.fetchall()
+
+            # when the user updates the hours (upsert)
+            if request.method == "POST":
+                # info the user submitted 
+                emp_ssn = int(request.form["employee"])
+                hours = float(request.form["hours"])
+                # upsert query - updates database
+                cur.execute("""
+                    INSERT INTO Works_On (Essn, Pno, Hours)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (Essn, Pno)
+                    DO UPDATE SET Hours = Works_On.Hours + EXCLUDED.Hours;
+                """, (emp_ssn, project_id, hours))
+                conn.commit()
+                # reloads the pages after the user submits the new hours
+                return redirect(url_for("project_details", project_id=project_id))
+
+            #get all employee names from the database for the drop down menu
+            cur.execute("SELECT Ssn, Fname || ' ' || Lname FROM Employee;")
+            all_employees = cur.fetchall()
+
+    # sends the project id, employees working for that project, and full list of employees to the new page
+    return render_template(
+        "project_details.html",
+        project_id=project_id,
+        employees=employees,
+        all_employees=all_employees
+    )
+
 
 # ---------------------------
 # Run App
