@@ -188,6 +188,42 @@ def project_details(project_id):
         all_employees=all_employees
     )
 
+#------------------------
+#  A6 - Managers Page
+#-------------------------
+@app.route('/managers')
+def managers_overview():
+    # connect to database
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            # query gets department name, department number, manager name, number of employees working there and total hours
+            query = """
+                SELECT
+                    d.Dname AS department_name,
+                    d.Dnumber AS department_number,
+                    COALESCE(e.Fname || ' ' || e.Lname, 'N/A') AS manager_name,
+                    (
+                        SELECT COUNT(*)
+                        FROM Employee emp
+                        WHERE emp.Dno = d.Dnumber
+                    ) AS employee_count,
+                    COALESCE((
+                        SELECT SUM(w.Hours)
+                        FROM Project p
+                        LEFT JOIN Works_On w ON p.Pnumber = w.Pno
+                        WHERE p.Dnum = d.Dnumber
+                    ), 0) AS total_hours
+                FROM Department d
+                LEFT JOIN Employee e
+                    ON d.Mgr_ssn = e.Ssn
+                ORDER BY d.Dnumber;
+            """
+            cur.execute(query)
+            data = cur.fetchall()
+
+    #passes data on to the managers page 
+    return render_template("managers.html", managers=data)
+
 
 # ---------------------------
 # Run App
